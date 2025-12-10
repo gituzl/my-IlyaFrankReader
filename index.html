@@ -3,54 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ilya Frank Reader AI (V3 Optimized)</title>
+    <title>Ilya Frank Reader AI (Mobile Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #334155; -webkit-tap-highlight-color: transparent; }
-        
-        /* 滚动条美化 */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* 通用滑块样式 */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-            height: 24px; 
-            cursor: pointer;
-            width: 100%;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            background: #e2e8f0;
-            height: 6px;
-            border-radius: 3px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
-            border-radius: 50%;
-            background: #f59e0b; 
-            margin-top: -6px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            transition: transform 0.1s;
-        }
+        input[type=range] { -webkit-appearance: none; background: transparent; height: 24px; cursor: pointer; width: 100%; }
+        input[type=range]::-webkit-slider-runnable-track { background: #e2e8f0; height: 6px; border-radius: 3px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #f59e0b; margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.1s; }
         input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
         input[type=range]:focus { outline: none; }
-        
-        /* 底部安全区适配 */
         .safe-pb { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
         .mobile-pb-fix { padding-bottom: 140px; }
-
-        /* 修复阅读区高亮 */
-        .word-hover:hover {
-            background-color: #fde68a; /* amber-200 */
-            color: #78350f; /* amber-900 */
-            border-radius: 2px;
-        }
+        .word-hover:hover { background-color: #fde68a; color: #78350f; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -62,11 +31,11 @@
         import { 
             Play, Pause, RotateCcw, BookOpen, Type, Settings, 
             Volume2, Save, X, Loader2, Globe, Sparkles, 
-            CheckCircle2, RotateCw, Wifi, Sliders, Music, Eraser, Layers, Zap
+            CheckCircle2, RotateCw, Wifi, Sliders, Music, Eraser, Layers, Zap, ChevronDown, Trash2
         } from 'https://esm.sh/lucide-react@0.263.1?dev';
 
         // -----------------------------------------------------------------------------
-        // CONFIGURATION
+        // CONFIGURATION & PRESETS
         // -----------------------------------------------------------------------------
         const LANGUAGES = {
             en: { label: 'English (英语)', ttsCode: 'en-US', azureVoice: 'en-US-JennyNeural', prompt: 'English' },
@@ -79,16 +48,54 @@
 
         const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
+        const MODEL_PRESETS = [
+            {
+                id: 'silicon_fast',
+                name: 'SiliconFlow 极速 (Qwen 7B)',
+                desc: '速度最快，适合快速解析，免费额度多',
+                baseUrl: 'https://api.siliconflow.cn/v1',
+                model: 'Qwen/Qwen2.5-7B-Instruct'
+            },
+            {
+                id: 'silicon_balanced',
+                name: 'SiliconFlow 均衡 (Qwen 72B)',
+                desc: '速度与质量的完美平衡 (推荐)',
+                baseUrl: 'https://api.siliconflow.cn/v1',
+                model: 'Qwen/Qwen2.5-72B-Instruct'
+            },
+            {
+                id: 'silicon_deep',
+                name: 'SiliconFlow 深度 (DeepSeek V2.5)',
+                desc: '原版设置，质量最高，但速度较慢',
+                baseUrl: 'https://api.siliconflow.cn/v1',
+                model: 'deepseek-ai/DeepSeek-V2.5'
+            },
+            {
+                id: 'google_flash',
+                name: 'Google Gemini Flash',
+                desc: '全球最快模型之一，需自备 Google Key',
+                baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+                model: 'gemini-1.5-flash'
+            },
+            {
+                id: 'openai_mini',
+                name: 'OpenAI GPT-4o-mini',
+                desc: '官方 Mini 模型，极速且聪明',
+                baseUrl: 'https://api.openai.com/v1',
+                model: 'gpt-4o-mini'
+            }
+        ];
+
         const DEFAULT_SETTINGS = {
             llmProvider: 'custom', 
             llmBaseUrl: 'https://api.siliconflow.cn/v1', 
             llmApiKey: '', 
-            llmModel: 'deepseek-ai/DeepSeek-V2.5', 
+            llmModel: 'Qwen/Qwen2.5-7B-Instruct', 
             ttsProvider: 'browser', 
             ttsVoice: 'alloy', 
             azureRegion: 'eastus',
             azureKey: '',
-            parsingGranularity: 2 // 1=Fine, 2=Standard, 3=Coarse
+            parsingGranularity: 2
         };
 
         const SAMPLE_CONTENT = {
@@ -109,7 +116,6 @@
         // COMPONENTS
         // -----------------------------------------------------------------------------
 
-        // --- Settings Modal ---
         const SettingsModal = ({ isOpen, onClose, settings, onSave }) => {
             const [localSettings, setLocalSettings] = useState(settings);
             const [llmTestStatus, setLlmTestStatus] = useState('idle');
@@ -126,6 +132,17 @@
                 setLocalSettings(prev => ({ ...prev, [key]: value }));
                 if (key.startsWith('llm')) setLlmTestStatus('idle');
                 if (key.startsWith('azure')) setAzureTestStatus('idle');
+            };
+
+            const applyPreset = (presetId) => {
+                const preset = MODEL_PRESETS.find(p => p.id === presetId);
+                if (preset) {
+                    setLocalSettings(prev => ({
+                        ...prev,
+                        llmBaseUrl: preset.baseUrl,
+                        llmModel: preset.model
+                    }));
+                }
             };
             
             const getGranularityLabel = (val) => {
@@ -148,7 +165,7 @@
                     });
                     if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                     setLlmTestStatus('success');
-                    alert("连接成功！");
+                    alert("连接成功！速度正常。");
                 } catch (error) { setLlmTestStatus('error'); alert(`连接失败: ${error.message}`); }
             };
 
@@ -180,8 +197,31 @@
                         </div>
                         <div className="p-6 overflow-y-auto space-y-8 custom-scrollbar">
                             <div className="space-y-4">
+                                <div className="flex justify-between items-center border-b pb-1">
+                                    <h3 className="font-semibold text-amber-700 text-sm uppercase tracking-wider">AI 模型设置 (影响速度)</h3>
+                                    {llmTestStatus === 'success' && <span className="text-xs text-green-600 flex items-center"><CheckCircle2 className="w-3 h-3 mr-1"/>已连接</span>}
+                                </div>
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                    <label className="text-xs font-bold text-amber-800 mb-2 block flex items-center gap-1"><Zap className="w-3 h-3 fill-current"/> 快速切换预设 (推荐)</label>
+                                    <div className="relative">
+                                        <select onChange={(e) => applyPreset(e.target.value)} className="w-full p-2 pl-3 pr-8 bg-white border border-amber-300 rounded text-sm text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500 outline-none" defaultValue="">
+                                            <option value="" disabled>选择一个预设配置...</option>
+                                            {MODEL_PRESETS.map(preset => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                    <p className="text-[10px] text-amber-700 mt-2 leading-tight">* 提示：觉得慢请选择 "Qwen 7B" 或 "Flash"。</p>
+                                </div>
+                                <div className="space-y-3 pt-2">
+                                    <div><label className="text-xs text-gray-500 block mb-1">Base URL</label><input type="text" value={localSettings.llmBaseUrl} onChange={(e) => handleChange('llmBaseUrl', e.target.value)} className="w-full p-3 border rounded-lg text-sm font-mono bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500" /></div>
+                                    <div><label className="text-xs text-gray-500 block mb-1">API Key</label><input type="password" value={localSettings.llmApiKey} onChange={(e) => handleChange('llmApiKey', e.target.value)} className="w-full p-3 border rounded-lg text-sm font-mono bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500" /></div>
+                                    <div><label className="text-xs text-gray-500 block mb-1">Model Name</label><input type="text" value={localSettings.llmModel} onChange={(e) => handleChange('llmModel', e.target.value)} className="w-full p-3 border rounded-lg text-sm font-mono bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500" /></div>
+                                    <div className="flex justify-end"><button onClick={testLLMConnection} className="text-xs border border-amber-200 text-amber-700 px-4 py-2 rounded-lg hover:bg-amber-50 flex items-center gap-1 transition-colors">{llmTestStatus === 'loading' ? <Loader2 className="w-3 h-3 animate-spin"/> : <Wifi className="w-3 h-3" />} 测试连接</button></div>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
                                 <h3 className="font-semibold text-amber-700 text-sm uppercase tracking-wider border-b pb-1 flex items-center gap-2"><Layers className="w-4 h-4" /> 解析粒度</h3>
-                                <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                                     <label className="flex justify-between items-center mb-3">
                                         <span className="text-sm font-medium text-gray-700">分割程度</span>
                                         <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded border border-amber-200">{getGranularityLabel(localSettings.parsingGranularity)}</span>
@@ -190,19 +230,6 @@
                                         <input type="range" min="1" max="3" step="1" value={localSettings.parsingGranularity || 2} onChange={(e) => handleChange('parsingGranularity', parseInt(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-600" />
                                         <div className="flex justify-between text-[10px] text-gray-400 mt-2 font-mono"><span>| 单词</span><span>| 意群</span><span>| 整句</span></div>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-3 leading-relaxed">* 调整此选项可显著改变解析结果：单词级适合精读，整句级适合泛读。</p>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center border-b pb-1">
-                                    <h3 className="font-semibold text-amber-700 text-sm uppercase tracking-wider">AI 模型设置</h3>
-                                    {llmTestStatus === 'success' && <span className="text-xs text-green-600 flex items-center"><CheckCircle2 className="w-3 h-3 mr-1"/>已连接</span>}
-                                </div>
-                                <div className="space-y-3">
-                                    <div><label className="text-xs text-gray-500 block mb-1">Base URL</label><input type="text" value={localSettings.llmBaseUrl} onChange={(e) => handleChange('llmBaseUrl', e.target.value)} placeholder="https://api.openai.com/v1" className="w-full p-3 border rounded-lg text-sm font-mono bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500" /></div>
-                                    <div><label className="text-xs text-gray-500 block mb-1">API Key</label><input type="password" value={localSettings.llmApiKey} onChange={(e) => handleChange('llmApiKey', e.target.value)} placeholder="sk-..." className="w-full p-3 border rounded-lg text-sm font-mono bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500" /></div>
-                                    <div><label className="text-xs text-gray-500 block mb-1">Model Name</label><input type="text" value={localSettings.llmModel} onChange={(e) => handleChange('llmModel', e.target.value)} placeholder="gpt-3.5-turbo" className="w-full p-3 border rounded-lg text-sm font-mono bg-slate-50 outline-none focus:ring-2 focus:ring-amber-500" /></div>
-                                    <div className="flex justify-end"><button onClick={testLLMConnection} className="text-xs border border-amber-200 text-amber-700 px-4 py-2 rounded-lg hover:bg-amber-50 flex items-center gap-1 transition-colors">{llmTestStatus === 'loading' ? <Loader2 className="w-3 h-3 animate-spin"/> : <Wifi className="w-3 h-3" />} 测试连接</button></div>
                                 </div>
                             </div>
                             <div className="space-y-4">
@@ -224,20 +251,13 @@
             );
         };
 
-        // --- Optimized Clickable Word (Fix Spacing) ---
-        // 关键修复：不再使用 block 或 inline-block，仅对文字包裹 inline 样式，空格保持原样
         const ClickableWord = ({ text, onSpeak, langCode, className = "" }) => {
             if (!text) return null;
-            // 按空格分割，但保留分隔符
             const segments = text.split(/(\s+)/);
-            
             return (
                 <span className="inline">
                     {segments.map((seg, index) => {
-                        // 如果是纯空格，直接渲染，不加点击事件，避免怪异间距
-                        if (/^\s+$/.test(seg)) {
-                            return <span key={index}>{seg}</span>;
-                        }
+                        if (/^\s+$/.test(seg)) { return <span key={index}>{seg}</span>; }
                         return (
                             <span 
                                 key={index} 
@@ -252,9 +272,6 @@
             );
         };
 
-        // -----------------------------------------------------------------------------
-        // MAIN APP
-        // -----------------------------------------------------------------------------
         const IlyaFrankReader = () => {
             const [settings, setSettings] = useState(DEFAULT_SETTINGS);
             const [showSettings, setShowSettings] = useState(false);
@@ -266,13 +283,12 @@
             const [isProcessing, setIsProcessing] = useState(false); 
             const [isGenerating, setIsGenerating] = useState(false); 
             
-            // Audio State
             const [fullAudioUrl, setFullAudioUrl] = useState(null);
             const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
             const [isPlaying, setIsPlaying] = useState(false);
             const [currentTime, setCurrentTime] = useState(0);
             const [duration, setDuration] = useState(0);
-            const [playbackRate, setPlaybackRate] = useState(1.0); // Default 1.0
+            const [playbackRate, setPlaybackRate] = useState(1.0);
 
             const synthRef = useRef(window.speechSynthesis);
             const audioRef = useRef(new Audio());
@@ -284,21 +300,18 @@
 
             useEffect(() => { return () => { if (fullAudioUrl) URL.revokeObjectURL(fullAudioUrl); }; }, [fullAudioUrl]);
 
-            // Audio Player Listeners & Rate Fix
             useEffect(() => {
                 const audio = audioRef.current;
                 const updateTime = () => setCurrentTime(audio.currentTime);
                 const updateDuration = () => setDuration(audio.duration);
                 const onEnded = () => setIsPlaying(false);
                 const onError = (e) => { console.error("Audio error", e); setIsPlaying(false); };
-                
-                // 关键修复：当音频加载或开始播放时，强制应用当前的 playbackRate
                 const applyRate = () => { audio.playbackRate = playbackRate; };
 
                 audio.addEventListener('timeupdate', updateTime);
                 audio.addEventListener('loadedmetadata', updateDuration);
-                audio.addEventListener('loadeddata', applyRate); // Fix: Re-apply on load
-                audio.addEventListener('play', applyRate);       // Fix: Re-apply on play
+                audio.addEventListener('loadeddata', applyRate);
+                audio.addEventListener('play', applyRate);
                 audio.addEventListener('ended', onEnded);
                 audio.addEventListener('error', onError);
 
@@ -311,9 +324,8 @@
                     audio.removeEventListener('error', onError);
                     audio.pause();
                 };
-            }, [playbackRate]); // Dependency on playbackRate ensures closure freshness if needed, though we set prop directly below
+            }, [playbackRate]);
 
-            // Keep rate synced
             useEffect(() => {
                 if (audioRef.current) audioRef.current.playbackRate = playbackRate;
             }, [playbackRate]);
@@ -345,7 +357,6 @@
 
                 try {
                     let blob;
-                    // ... (API calls same as before)
                     if (settings.ttsProvider === 'openai') {
                         if (!settings.llmApiKey) throw new Error("请在设置中填写 API Key");
                         const response = await fetch(`${settings.llmBaseUrl}/audio/speech`, {
@@ -382,7 +393,7 @@
                         if(!rawText) return;
                         const u = new SpeechSynthesisUtterance(rawText);
                         u.lang = LANGUAGES[targetLang].ttsCode;
-                        u.rate = playbackRate; // Apply rate
+                        u.rate = playbackRate;
                         u.onend = () => setIsPlaying(false);
                         synthRef.current.cancel(); 
                         synthRef.current.speak(u);
@@ -420,7 +431,6 @@
                 } catch (error) { alert("生成失败: " + error.message); } finally { setIsGenerating(false); }
             };
 
-            // --- Optimized Parser (Speed & Granularity) ---
             const parseText = async () => {
                 if (!inputText.trim()) return alert("请输入文本");
                 if (!settings.llmApiKey) return alert("请配置 API Key");
@@ -432,12 +442,11 @@
                 try {
                     const langName = LANGUAGES[targetLang].prompt;
                     
-                    // 粒度指令 - 放在 System Prompt 中以提高权重
                     let gInstruction = "Standard parsing: split by natural logical phrases (sense groups).";
                     if (settings.parsingGranularity === 1) gInstruction = "Detailed parsing: split into very small chunks (single words or short idioms).";
                     if (settings.parsingGranularity === 3) gInstruction = "Coarse parsing: split by full sentences or independent clauses ONLY.";
 
-                    const systemPrompt = `You are a strict JSON generator for Ilya Frank's Reading Method.
+                    const systemPrompt = `You are a strict JSON generator.
                     TARGET LANGUAGE: ${langName}.
                     RULE: ${gInstruction}
                     FORMAT: JSON Array [{"original": "...", "cn": "..."}] only.
@@ -453,7 +462,7 @@
                                 { role: "system", content: systemPrompt }, 
                                 { role: "user", content: inputText }
                             ], 
-                            temperature: 0, // Lower temp for speed and deterministic format
+                            temperature: 0, 
                             max_tokens: 4000
                         })
                     });
@@ -490,6 +499,17 @@
 
             const saveSettings = (s) => { setSettings(s); localStorage.setItem('ilya_reader_settings', JSON.stringify(s)); setShowSettings(false); };
 
+            const handleClear = (e) => {
+                e.preventDefault(); 
+                if(window.confirm("确定要清空所有内容吗？")) {
+                    setInputText(''); 
+                    setRawText(''); 
+                    setIlyaData([]); 
+                    setFullAudioUrl(null);
+                    setIsPlaying(false);
+                }
+            };
+
             return (
                 <div className="min-h-screen flex flex-col mobile-pb-fix"> 
                     <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} settings={settings} onSave={saveSettings} />
@@ -514,7 +534,14 @@
                                     <h2 className="font-bold text-slate-700 flex items-center gap-2"><Globe className="w-4 h-4 text-amber-500" /> 原文</h2>
                                     <div className="flex gap-2">
                                          <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-md px-2 py-1 outline-none focus:border-amber-500">{Object.entries(LANGUAGES).map(([c, cfg]) => <option key={c} value={c}>{cfg.label}</option>)}</select>
-                                        <button onClick={() => setInputText('')} className="text-slate-400 hover:text-red-500 transition-colors p-2" title="清空"><Eraser className="w-4 h-4"/></button>
+                                        <button 
+                                            type="button"
+                                            onClick={handleClear} 
+                                            className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all p-2 rounded-full active:bg-red-100" 
+                                            title="清空所有内容"
+                                        >
+                                            <Trash2 className="w-5 h-5"/>
+                                        </button>
                                     </div>
                                 </div>
                                 <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="在此粘贴俄语、德语等文章片段..." className="w-full p-4 rounded-lg border border-slate-200 min-h-[180px] md:min-h-[240px] text-base leading-relaxed resize-y focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none bg-slate-50 font-serif" />
@@ -539,7 +566,6 @@
                                             <span key={idx} className="inline">
                                                 <ClickableWord text={seg.original} langCode={LANGUAGES[targetLang].ttsCode} onSpeak={handleWordClick} className="font-semibold text-slate-900" />
                                                 {seg.cn && <span className="text-base text-slate-500 font-sans bg-slate-100 px-1.5 py-0.5 rounded-md inline-block my-1 mx-1">({seg.cn})</span>}
-                                                {/* 添加自然空格，防止粘连，但不由 margin 控制 */}
                                                 {" "} 
                                             </span>
                                         ))}
